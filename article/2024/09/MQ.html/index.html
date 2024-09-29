@@ -1,0 +1,138 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0078E7"><meta name="author" content="Cc."><meta name="copyright" content="Cc."><meta name="generator" content="Hexo 7.3.0"><meta name="theme" content="hexo-theme-yun"><title>MQ | MS</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/star-markdown-css@0.4.1/dist/yun/yun-markdown.min.css"><link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/prism-theme-vars/base.css"><script src="https://fastly.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".markdown-body img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link rel="icon" type="image/png" href="/favicon.jpg"><link rel="mask-icon" href="/favicon.jpg" color="#0078E7"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fastly.jsdelivr.net/npm/" crossorigin><script id="yun-config">
+    window.Yun = {}
+    window.CONFIG = {"hostname":"c-cww.github.io","root":"/","title":"跟着心往前","version":"1.10.11","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.yunyoujun.cn/img/avatar/none.jpg","say":{"api":"https://el-bot-api.vercel.app/api/words/young"},"fireworks":{"colors":null},"vendors":{"host":"https://fastly.jsdelivr.net/npm/","darken":"https://fastly.jsdelivr.net/npm/darken@1.5.0"}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/hexo-theme-yun.js" type="module"></script><meta name="description" content="概述消息队列是一种存储消息的容器，由于队列是一种先进先出的数据结构，所以消费消息时也是按照顺序来消费的。 作用：  异步处理：将耗时的任务放到消息队列中异步处理，减少响应时间，提高用户体验 削峰、限流：将短时间高并发产生的事务消息存储在消息队列中，然后后端再根据自己的能力消费数据 降低系统耦合性：使用发布-订阅模式，生产者发布消息，消费者订阅消息 实现分布式事务：使用2PC的方式，完成分布式消息">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MQ">
+<meta property="og:url" content="https://c-cww.github.io/article/2024/09/MQ.html/index.html">
+<meta property="og:site_name" content="MS">
+<meta property="og:description" content="概述消息队列是一种存储消息的容器，由于队列是一种先进先出的数据结构，所以消费消息时也是按照顺序来消费的。 作用：  异步处理：将耗时的任务放到消息队列中异步处理，减少响应时间，提高用户体验 削峰、限流：将短时间高并发产生的事务消息存储在消息队列中，然后后端再根据自己的能力消费数据 降低系统耦合性：使用发布-订阅模式，生产者发布消息，消费者订阅消息 实现分布式事务：使用2PC的方式，完成分布式消息">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/C-cWw/blog-images/96388546.jpg">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/C-cWw/blog-images/16ef383d3e8c9788.jpg">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/C-cWw/blog-images/16ef386c6d1e8bdb.jpg">
+<meta property="article:published_time" content="2024-09-27T02:00:00.000Z">
+<meta property="article:modified_time" content="2024-09-29T14:27:21.746Z">
+<meta property="article:author" content="Cc.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/C-cWw/blog-images/96388546.jpg"><script>(function() {
+  if (CONFIG.mode !== 'auto') return
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  const setting = localStorage.getItem('darken-mode') || 'auto'
+  if (setting === 'dark' || (prefersDark && setting !== 'light'))
+    document.documentElement.classList.toggle('dark', true)
+})()</script></head><body><script src="https://code.iconify.design/2/2.1.1/iconify.min.js"></script><script>// Define global variable
+IconifyProviders = {
+  // Empty prefix: overwrite default API provider configuration
+  '': {
+    // Use custom API first, use Iconify public API as backup
+    resources: [
+        'https://api.iconify.design',
+    ],
+    // Wait for 1 second before switching API hosts
+    rotate: 1000,
+  },
+};</script><script defer src="https://fastly.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js" type="module"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js" type="module"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><span class="icon iconify" data-icon="ri:list-ordered"></span></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><span class="icon iconify" data-icon="ri:passport-line"></span></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="Cc."><img width="96" loading="lazy" src="/images/head.jpg" alt="Cc."><span class="site-author-status" title="bot">☺️</span></a><div class="site-author-name"><a href="/about/">Cc.</a></div><span class="site-name">MS</span><sub class="site-subtitle"></sub><div class="site-description">跟着心往前~</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:home-4-line"></span></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:archive-line"></span></span><span class="site-state-item-count">2</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:folder-2-line"></span></span><span class="site-state-item-count">2</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="site-state-item-count">0</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:settings-line"></span></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/C-cWw" title="GitHub" target="_blank" style="color:#181717"><span class="icon iconify" data-icon="ri:github-line"></span></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><span class="icon iconify" data-icon="ri:genderless-line"></span></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><span class="icon iconify" data-icon="ri:contrast-2-line"></span></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#RabbitMQ"><span class="toc-number">2.</span> <span class="toc-text">RabbitMQ</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%9F%E5%88%97%E6%A8%A1%E5%9E%8B"><span class="toc-number">2.1.</span> <span class="toc-text">队列模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%A4%E6%8D%A2%E6%9C%BA%E7%B1%BB%E5%9E%8B"><span class="toc-number">2.2.</span> <span class="toc-text">交换机类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%BB%E4%BF%A1%E9%98%9F%E5%88%97"><span class="toc-number">2.3.</span> <span class="toc-text">死信队列</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E5%A6%82%E4%BD%95%E4%BC%A0%E8%BE%93"><span class="toc-number">2.4.</span> <span class="toc-text">消息如何传输</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E5%8F%AF%E9%9D%A0%E6%80%A7"><span class="toc-number">2.5.</span> <span class="toc-text">消息可靠性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E9%AB%98%E5%8F%AF%E7%94%A8"><span class="toc-number">2.6.</span> <span class="toc-text">消息高可用</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#RocketMQ"><span class="toc-number">3.</span> <span class="toc-text">RocketMQ</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E6%A8%A1%E5%9E%8B"><span class="toc-number">3.1.</span> <span class="toc-text">消息模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E8%B4%B9%E8%80%85%E5%88%86%E7%B1%BB"><span class="toc-number">3.2.</span> <span class="toc-text">消费者分类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E6%80%A7%E8%83%BD%E8%AF%BB%E5%86%99"><span class="toc-number">3.3.</span> <span class="toc-text">高性能读写</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%B7%E7%9B%98%E6%9C%BA%E5%88%B6"><span class="toc-number">3.4.</span> <span class="toc-text">刷盘机制</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article" style="--smc-primary:#0078E7;"><link itemprop="mainEntityOfPage" href="https://C-cww.github.io/article/2024/09/MQ.html/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="Cc."><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="MS"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">MQ</h1><div class="post-meta"><div class="post-time"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:calendar-line"></span></span> <time title="创建时间：2024-09-27 10:00:00" itemprop="dateCreated datePublished" datetime="2024-09-27T10:00:00+08:00">2024-09-27</time><span class="post-meta-divider">-</span><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:calendar-2-line"></span></span> <time title="修改时间：2024-09-29 22:27:21" itemprop="dateModified" datetime="2024-09-29T22:27:21+08:00">2024-09-29</time></div><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><span class="icon iconify" data-icon="ri:folder-line"></span></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">中间件</span></a></span></span></div><div class="post-author"><span class="author-name">Cc.</span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body"><h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>消息队列是一种存储消息的容器，由于队列是一种先进先出的数据结构，所以消费消息时也是按照顺序来消费的。</p>
+<p>作用：</p>
+<ol>
+<li>异步处理：将耗时的任务放到消息队列中异步处理，减少响应时间，提高用户体验</li>
+<li>削峰、限流：将短时间高并发产生的事务消息存储在消息队列中，然后后端再根据自己的能力消费数据</li>
+<li>降低系统耦合性：使用发布-订阅模式，生产者发布消息，消费者订阅消息</li>
+<li>实现分布式事务：使用2PC的方式，完成分布式消息</li>
+<li>消息保序</li>
+<li>延时 &#x2F; 定时处理：指定一个时间后再消费</li>
+<li>即时通讯：MQTT协议</li>
+<li>数据流处理</li>
+</ol>
+<p>常见的消息队列：</p>
+<p>Kafka</p>
+<ol>
+<li>消息队列：发布和订阅消息流，这个功能类似于消息队列，这也是 Kafka 也被归类为消息队列的原因。</li>
+<li>容错的持久方式存储记录消息流：Kafka 会把消息持久化到磁盘，有效避免了消息丢失的风险。</li>
+<li>流式处理平台： 在消息发布的时候进行处理，Kafka 提供了一个完整的流式处理类库。</li>
+</ol>
+<p>RocketMQ</p>
+<p>核心特性：</p>
+<ul>
+<li>云原生：生与云，长与云，无限弹性扩缩，K8s 友好</li>
+<li>高吞吐：万亿级吞吐保证，同时满足微服务与大数据场景</li>
+<li>流处理：提供轻量、高扩展、高性能和丰富功能的流计算引擎</li>
+<li>金融级：金融级的稳定性，广泛用于交易核心链路</li>
+<li>架构极简：零外部依赖，Shared-nothing 架构</li>
+<li>生态友好：无缝对接微服务、实时计算、数据湖等周边生态</li>
+</ul>
+<p>RabbitMQ</p>
+<p>特点：可靠、灵活路由、可扩展性、高可用性、支持多种协议、多语言客户端</p>
+<h1 id="RabbitMQ"><a href="#RabbitMQ" class="headerlink" title="RabbitMQ"></a>RabbitMQ</h1><h2 id="队列模型"><a href="#队列模型" class="headerlink" title="队列模型"></a>队列模型</h2><p>RabbitMQ整体上是一个生产者与消费者模型，主要负责接收、存储和转发消息</p>
+<p><img src="https://cdn.jsdelivr.net/gh/C-cWw/blog-images/96388546.jpg" alt="img" loading="lazy"></p>
+<p>在RabbitMQ中，消息不会直接投递到Queue中，中间还需要经过Exchange的路由，如果路由不到，就会返回给生产者或直接丢弃</p>
+<h2 id="交换机类型"><a href="#交换机类型" class="headerlink" title="交换机类型"></a>交换机类型</h2><p>Exchange有不同的类型，分别是direct、fanout、topic、headers</p>
+<ul>
+<li>fanout：将所有发送到该 Exchange 的消息路由到所有与它绑定的 Queue 中</li>
+<li>direct：把消息路由到那些 Bindingkey 与 RoutingKey 完全匹配的 Queue 中</li>
+</ul>
+<h2 id="死信队列"><a href="#死信队列" class="headerlink" title="死信队列"></a>死信队列</h2><p>DLX，全称为 Dead - Letter - Exchange，死信交换器。当消息在一个队列中变成死信之后，他能被重新发送到另一个交换器中，这个交换器就是DLX，绑定DLX的队列就称为死信队列</p>
+<p>导致死信的几种原因：消息被拒且require为false；消息TTL过期；队列满了，无法再添加</p>
+<p>RabbitMQ怎么实现延迟队列 [ 消息延迟消费 ]：死信交换机和TTL；插件</p>
+<h2 id="消息如何传输"><a href="#消息如何传输" class="headerlink" title="消息如何传输"></a>消息如何传输</h2><p>由于TCP 链接的创建和销毁开销较大，且并发数受系统资源限制，会造成性能瓶颈，所以 RabbitMQ 使用信道的方式来传输数据。信道（Channel）是生产者、消费者与 RabbitMQ 通信的渠道，信道是建立在 TCP 链接上的虚拟链接，且每条 TCP 链接上的信道数量没有限制。就是说 RabbitMQ 在一条 TCP 链接上建立成百上千个信道来达到多个线程处理，这个 TCP 被多个线程共享，每个信道在 RabbitMQ 都有唯一的 ID，保证了信道私有性，每个信道对应一个线程使用</p>
+<h2 id="消息可靠性"><a href="#消息可靠性" class="headerlink" title="消息可靠性"></a>消息可靠性</h2><p>如何保证消息可靠性：</p>
+<ul>
+<li>生产者到 RabbitMQ：事务机制和 Confirm 机制<br>注意：事务机制和 Confirm 机制是互斥的，两者不能共存，会导致 RabbitMQ 报错。</li>
+<li>RabbitMQ 自身：持久化、集群、普通模式、镜像模式。</li>
+<li>RabbitMQ 到消费者：basicAck 机制、死信队列、消息补偿机制。</li>
+</ul>
+<h2 id="消息高可用"><a href="#消息高可用" class="headerlink" title="消息高可用"></a>消息高可用</h2><p>RabbitMQ是基于主从架构实现高可用的，RabbitMQ有三种模式：单机模式、普通集群模式、镜像集群模式</p>
+<ul>
+<li>普通集群模式<br>在多台机器上启动多个RabbitMQ实例，每个queue只会放在一个RabbitMQ实例上，但是每个实例都同步queue的元数据，消费时，如果连接到另一个实例，那么这个实例会从queue所在实例上拉取数据，从而提高吞吐量</li>
+<li>镜像集群模式<br>与普通集群相比，消息和元数据都存在于多个实例中，每次写消息到MQ中时，都会自动进行同步，从而防止宕机带来的消息丢失，但是性能开销较大</li>
+</ul>
+<h1 id="RocketMQ"><a href="#RocketMQ" class="headerlink" title="RocketMQ"></a>RocketMQ</h1><h2 id="消息模型"><a href="#消息模型" class="headerlink" title="消息模型"></a>消息模型</h2><p>RocketMQ中的消息模型是按照主题模型所实现的，RocketMQ使用的是队列</p>
+<p><img src="https://cdn.jsdelivr.net/gh/C-cWw/blog-images/16ef383d3e8c9788.jpg" alt="img" loading="lazy"></p>
+<p> 架构：</p>
+<ol>
+<li>Broker，主要负责消息的存储、投递和查询以及服务高可用保证</li>
+<li>NameServer，注册中心，提供Broker管理和路由信息管理</li>
+<li>Producer，生产者</li>
+<li>Consumer，消费者</li>
+</ol>
+<p><img src="https://cdn.jsdelivr.net/gh/C-cWw/blog-images/16ef386c6d1e8bdb.jpg" alt="img" loading="lazy"></p>
+<h2 id="消费者分类"><a href="#消费者分类" class="headerlink" title="消费者分类"></a>消费者分类</h2><ul>
+<li>PushConsumer<br>高度封装的消费者类型，消费消息仅仅通过消费监听器监听并返回结果。消息的获取、消费状态提交以及消费重试都通过RocketMQ的客户端SDK实现</li>
+<li>SimplerConsumer<br>接口原子型的消费者类型，消息的获取、消费状态提交以及消费重试都是通过消费者业务逻辑主动发起调用完成</li>
+<li>PullConsumer</li>
+</ul>
+<h2 id="高性能读写"><a href="#高性能读写" class="headerlink" title="高性能读写"></a>高性能读写</h2><p>零拷贝技术</p>
+<h2 id="刷盘机制"><a href="#刷盘机制" class="headerlink" title="刷盘机制"></a>刷盘机制</h2><p>同步刷盘 or 异步刷盘</p>
+<p>同步复制 or 异步复制</p>
+<p>存储机制</p>
+<ol>
+<li>CommitLog：消息主体以及元数据的存储主体</li>
+<li>ConsumeQueue：消息消费队列</li>
+<li>IndexFile：索引文件</li>
+</ol>
+</div></section><ul class="post-copyright"><li class="post-copyright-author"><strong>本文作者：</strong>Cc.</li><li class="post-copyright-link"><strong>本文链接：</strong><a href="https://c-cww.github.io/article/2024/09/MQ.html/" title="MQ">https://c-cww.github.io/article/2024/09/MQ.html/</a></li><li class="post-copyright-license"><strong>版权声明：</strong>本博客所有文章除特别声明外，均默认采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><span class="icon iconify" data-icon="ri:creative-commons-line"></span><span class="icon iconify" data-icon="ri:creative-commons-by-line"></span><span class="icon iconify" data-icon="ri:creative-commons-nc-line"></span><span class="icon iconify" data-icon="ri:creative-commons-sa-line"></span></a> 许可协议。</li></ul></article><div class="post-nav"><div class="post-nav-item"></div><div class="post-nav-item"><a class="post-nav-next" href="/article/2024/09/Java%20Collections.html/" rel="next" title="Java Collections"><span class="post-nav-text">Java Collections</span><span class="icon iconify" data-icon="ri:arrow-right-s-line"></span></a></div></div></div><div class="hty-card" id="comment"></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2024 </span><span class="with-love" id="animate"><span class="icon iconify" data-icon="ri:cloud-line"></span></span><span class="author"> Cc.</span></div><div class="live-time"><span>感谢陪伴</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2024-09-26T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = ` ${passDay} 天 ${passHour} 小时 ${passMinute} 分 ${passSecond} 秒`;
+}
+blog_live_time();
+</script></div><div class="footer-custom-text">人生海海 山山而川~</div></footer></div><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><span class="icon iconify" data-icon="ri:arrow-up-s-line"></span><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#0078E7" stroke-width="2" stroke-linecap="round"></circle></svg></a><script src="https://fastly.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js"></script><script>const images = [...document.querySelectorAll('.markdown-body img')]
+mediumZoom(images)</script><style>.medium-zoom-image {
+  z-index: 99;
+}</style></body></html>
